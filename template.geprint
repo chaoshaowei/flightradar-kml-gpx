@@ -1,0 +1,62 @@
+[General]
+version=2
+scaling_factor=3
+print_type=0
+print_quality=9
+save_image_quality=4
+print_flags=0
+color_mode=0
+camera="@ByteArray(<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\" xmlns:kml=\"http://www.opengis.net/kml/2.2\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n<Placemark>\n\t<LookAt>\n\t\t<longitude>-121.1165626262248</longitude>\n\t\t<latitude>38.42755886385941</latitude>\n\t\t<altitude>0</altitude>\n\t\t<heading>-19.46466893246241</heading>\n\t\t<tilt>71.4679680028344</tilt>\n\t\t<range>14789.22163857582</range>\n\t\t<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>\n\t</LookAt>\n</Placemark>\n</kml>\n)"
+
+[Title%20and%20Description]
+Layout\size=@Size(269 101)
+Layout\visible=true
+Layout\anchor_pos=@Variant(\0\0\0\x1a\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0)
+Layout\anchor_halign=0
+Layout\anchor_valign=0
+title=Jackson's First Flight
+description=2022-07-21 KMHR-KMHR\n14:49-15:17 PDT
+
+[HTML%20Area]
+Layout\size=@Size(393 96)
+Layout\visible=false
+Layout\anchor_pos=@Variant(\0\0\0\x1a\0\0\0\0\0\0\0\0?\xe0\0\0\0\0\0\0)
+Layout\anchor_halign=0
+Layout\anchor_valign=1
+html="<!doctype html>\n<html>\n<head>\n<style type='text/css'>\nbody {\n    font: 100% 'Arial', 'Helvetica', sans-serif;\n    margin: 0;\n}\n\n#white_box {\n    background-color: rgba(255, 255, 255, 0.85);\n    bottom: 4pt;\n    color: rgba(0, 0, 0, 0.85);\n    left: 4pt;\n    outline: 1pt solid rgba(0, 0, 0, 0.2);\n    padding: 8pt 8pt;\n    position: absolute;\n    right: 4pt;\n    top: 4pt;\n}\n</style>\n</head>\n<body>\n<div id='white_box'>\n<p style='font-size: 11pt; white-space: nowrap;'>\nEdit this HTML to add a logo image or custom map title.&nbsp;&nbsp;&nbsp;&nbsp;\n<br />\nUse an <tt>iframe</tt> tag to display an external page.&nbsp;&nbsp;&nbsp;&nbsp;\n</p>\n<div style='height: 12pt; font-size: 0;'>&nbsp;</div>\n</div>\n</body>\n</html>\n"
+
+[Legend]
+Layout\size=@Size(282 82)
+Layout\visible=false
+Layout\anchor_pos=@Variant(\0\0\0\x1a?\xf0\0\0\0\0\0\0\0\0\0\0\0\0\0\0)
+Layout\anchor_halign=2
+Layout\anchor_valign=0
+Features\1\checked=true
+Features\1\name="Flight of N876BR at 2022-07-20Z "
+Features\1\pixmap="@Variant(\0\0\0\x41\0\0\0\x1\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\0\x10\0\0\0\x10\b\x6\0\0\0\x1f\xf3\xff\x61\0\0\0\tpHYs\0\0\xe\xc4\0\0\xe\xc4\x1\x95+\xe\x1b\0\0\0mIDAT8\x8d\xb5\x92\x41\xe\0!\b\x3\xd1\xc7\x96\x37\xd1\xcfvO\x1a\x63\x62\x82\xbar3\xa1\x3\xb4\x9a\xbd(\0\x2\xa0\x63\xb1\x64\x92l\x1f\x32\x8a\xb3\x90z\xb4\x66v\x8b+\x1f\x9a\xf8\x18\x32\x3\x7f\x83,#\xce\x64\xbf\xf4'c\xdc*\xe2\n@\x11\xec\x8d\x11\xdc\xba\x39\xfd\xfH\x16w\xf4\xb7;\x8c\x64I\x9d\x30\xc7:\xf6\x94\xb1\xa9M\x9a!}\xd2\x8b\xfa\0[\xcd\x8b_\xe3\xa9\xae\xbd\0\0\0\0IEND\xae\x42`\x82)"
+Features\size=1
+
+[Scale]
+Layout\size=@Size(360 20)
+Layout\visible=true
+Layout\anchor_pos=@Variant(\0\0\0\x1a?\xf0\0\0\0\0\0\0?\xf0\0\0\0\0\0\0)
+Layout\anchor_halign=2
+Layout\anchor_valign=2
+
+[Compass]
+Layout\size=@Size(72 72)
+Layout\visible=true
+Layout\anchor_pos=@Variant(\0\0\0\x1a?\xf0\0\0\0\0\0\0?\xef\x31p\0\0\0\0)
+Layout\anchor_halign=2
+Layout\anchor_valign=2
+
+[Copyright]
+Layout\size=@Size(203 97)
+Layout\visible=true
+Layout\anchor_pos=@Variant(\0\0\0\x1a\0\0\0\0\0\0\0\0?\xf0\0\0\0\0\0\0)
+Layout\anchor_halign=0
+Layout\anchor_valign=2
+
+[Printer]
+orientation=1
+paper_size=0
