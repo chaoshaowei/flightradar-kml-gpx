@@ -1,14 +1,17 @@
 import requests
 import os
-import csv
+import argparse
 import json
-import datetime
+import datetime, time
 #-----------------------------
 # Flags
 #-----------------------------
 DEBUG = False
 SAVE_RESPONSE = True
 CONTINUE_ID = True
+
+SAVE_HEX2DATE_INFO = True
+ID_SAMPLES = ['10000000', '11B63080', '1CC20400', '20000000', '30000000']
 
 # Run mode
 FORCE_SEARCH = False
@@ -17,6 +20,7 @@ LIST_FLIGHT_BY_REG = 0
 SEARCH_FLIGHT_BY_REG = 1
 SEARCH_FLIGHT_BY_FLIGHT_ID = 2
 SEARCH_FLIGHT_BY_FLIGHT_IDS = 3
+RUN_FOR_A_RANGE = 4
 
 RUN_MODE = SEARCH_FLIGHT_BY_FLIGHT_IDS
 
@@ -54,7 +58,13 @@ if __name__ == '__main__':
     #-----------------------------
     REG_ID = 'B-16340'
     FLIGHT_ID = '31d5273a'#
-    FLIGHT_IDS = ['32d0984b', '32d12f76']
+    FLIGHT_IDS = ['36eb3807', '36eba98f']
+    START_ID = '0CDF70B8'
+    END_ID = '0CDF7A28'
+
+    ENABLE_SLEEP = True
+    SLEEP_EVERY_N_SEARCH = 100
+    EVERY_SLEEP_DURATION = 5
 
     #-----------------------------
     # target url
@@ -70,8 +80,11 @@ if __name__ == '__main__':
     WORKING_DIR = os.path.dirname(os.path.realpath(__file__))
 
     RESPONSE_DIR = os.path.join(WORKING_DIR, 'Responses')
+    RESPONSE_ERROR_DIR = os.path.join(WORKING_DIR, 'Responses_Error')
     RESPONSE1_FILE = os.path.join(RESPONSE_DIR, f'List_{REG_ID}.json')
     HEADERS_FILE = os.path.join(WORKING_DIR, f'headers.json')
+
+    FR24_HEX_DATE_FILE = os.path.join(WORKING_DIR, 'fr24_hex_date.csv')
     
     KML_TEMPLATE_FILE = os.path.join(WORKING_DIR, 'kml_template.xml')
     with open (KML_TEMPLATE_FILE, 'r', encoding='utf-8') as f:
@@ -81,8 +94,9 @@ if __name__ == '__main__':
     with open (GPX_TEMPLATE_FILE, 'r', encoding='utf-8') as f:
         GPX_TEMPLATE = ''.join(f.readlines())
 
-    SPECIFIC_GPX_PATH = os.path.join(WORKING_DIR, 'Ian', 'GPXs')
-    SPECIFIC_KML_PATH = os.path.join(WORKING_DIR, 'Ian', 'KMLs')
+    SPECIFIC_GPX_PATH = os.path.join(WORKING_DIR, 'Custom', 'Ian', 'GPXs')
+    SPECIFIC_KML_PATH = os.path.join(WORKING_DIR, 'Custom', 'Ian', 'KMLs')
+    print(SPECIFIC_GPX_PATH)
     if COPY_TO_SPECIFIC_PATH:
         os.makedirs(SPECIFIC_GPX_PATH, exist_ok=True)
         os.makedirs(SPECIFIC_KML_PATH, exist_ok=True)
@@ -128,19 +142,20 @@ if __name__ == '__main__':
     #-----------------------------
     # Search Flight
     #-----------------------------
-    def search_flight(flight_id: str):
-        print(f"Searching Flight: {flight_id}")
+    def search_flight(flight_id: str, clear_cookie: bool = False):
+        print(f"\nSearching Flight: {flight_id}")
 
         if not FORCE_SEARCH and False:
             print("  Will not be searched")
 
         # Generate URL
-        #timestamp_str = '1695335400&token=sad'
         timestamp_str = str(int((datetime.datetime.now()).timestamp()))
         flight_url = FLIGHT_URL_TEMPLATE.replace('[FLIGHT_ID]', flight_id).replace('[TIMESTAMP]', timestamp_str)
-        print(flight_url)
+        print("  "+flight_url)
 
         # Getting Data
+        if clear_cookie:
+            s.cookies.clear()
         r = s.get(flight_url, headers=headers)
         if r.status_code!=200:
             print(f'Error code {r.statuscode}')
@@ -157,6 +172,7 @@ if __name__ == '__main__':
             eventTimestamp = full_dict['result']['response']['data']['flight']['track'][-1]['timestamp']
             eventTime = datetime.datetime.fromtimestamp(eventTimestamp, tz=datetime.timezone.utc)
 
+        # Filename will depend on flight status
         if full_dict['result']['response']['data']['flight']['status']['generic']['status']['text'] in ['landed', 'diverted']:
             print(f"  {reg}, {full_dict['result']['response']['data']['flight']['status']['generic']['status']['text']}")
             if SAVE_RESPONSE:
@@ -165,9 +181,23 @@ if __name__ == '__main__':
                 with open(RESPONSE2_FILE, 'w', encoding='utf-8') as f:
                     f.write(r.text)
         else:
-            print(f"  {reg}, {full_dict['result']['response']['data']['flight']['status']['generic']['status']['text']}, json will not be saved")
-
+            # For tracks that have status not in ['landed', 'diverted']
+            print(f"  {reg}, {full_dict['result']['response']['data']['flight']['status']['generic']['status']['text']}")
+            if SAVE_RESPONSE:
+                os.makedirs(os.path.join(RESPONSE_ERROR_DIR, reg), exist_ok=True)
+                RESPONSE2_FILE = os.path.join(RESPONSE_ERROR_DIR, reg, f'{eventTime.astimezone(tz=OUTPUT_TZ).isoformat(timespec="minutes").replace(":","")}_{flight_id}.json')
+                with open(RESPONSE2_FILE, 'w', encoding='utf-8') as f:
+                    f.write(r.text)
+            else:
+                print("    json will not be saved")
         
+        # Saving to hex-to-date database
+        if SAVE_HEX2DATE_INFO:
+            for trkpt_dict in full_dict['result']['response']['data']['flight']['track']:
+                trkptTime = datetime.datetime.fromtimestamp(trkpt_dict['timestamp'], tz=datetime.timezone.utc)
+                print(trkptTime.isoformat())
+                break
+
         return full_dict['result']['response']['data']['flight']
 
     def outputKML(flight_dict: dict):
@@ -196,9 +226,11 @@ if __name__ == '__main__':
         elif TIMEZONE_MODE == TIMEZONE_CUSTOM:
             time_str = eventTime.astimezone(tz=OUTPUT_TZ).isoformat(timespec="minutes").replace(":","")
         elif TIMEZONE_MODE == TIMEZONE_AUTO:
-            output_tzinfo = datetime.timezone(datetime.timedelta(seconds=flight_dict['airport']['destination']['timezone']['offset']))
-            time_str = eventTime.astimezone(tz=output_tzinfo).isoformat(timespec="minutes").replace(":","")
-        
+            try:
+                output_tzinfo = datetime.timezone(datetime.timedelta(seconds=flight_dict['airport']['destination']['timezone']['offset']))
+                time_str = eventTime.astimezone(tz=output_tzinfo).isoformat(timespec="minutes").replace(":","")
+            except TypeError:
+                time_str = eventTime.astimezone(tz=OUTPUT_TZ).isoformat(timespec="minutes").replace(":","")
         # Handle output filename
         kml_filename = time_str
         if OUT_FLT_NUM:
@@ -252,9 +284,12 @@ if __name__ == '__main__':
         elif TIMEZONE_MODE == TIMEZONE_CUSTOM:
             time_str = eventTime.astimezone(tz=OUTPUT_TZ).isoformat(timespec="minutes").replace(":","")
         elif TIMEZONE_MODE == TIMEZONE_AUTO:
-            output_tzinfo = datetime.timezone(datetime.timedelta(seconds=flight_dict['airport']['destination']['timezone']['offset']))
-            time_str = eventTime.astimezone(tz=output_tzinfo).isoformat(timespec="minutes").replace(":","")
-        
+            try:
+                output_tzinfo = datetime.timezone(datetime.timedelta(seconds=flight_dict['airport']['destination']['timezone']['offset']))
+                time_str = eventTime.astimezone(tz=output_tzinfo).isoformat(timespec="minutes").replace(":","")
+            except TypeError:
+                time_str = eventTime.astimezone(tz=OUTPUT_TZ).isoformat(timespec="minutes").replace(":","")
+
         # Handle output filename
         gpx_filename = time_str
         if OUT_FLT_NUM:
@@ -281,10 +316,45 @@ if __name__ == '__main__':
         ids = FLIGHT_IDS
     elif RUN_MODE == SEARCH_FLIGHT_BY_REG or RUN_MODE == LIST_FLIGHT_BY_REG:
         ids = list_flights(reg_id=REG_ID)
-    
-    if RUN_MODE == SEARCH_FLIGHT_BY_REG or RUN_MODE == SEARCH_FLIGHT_BY_FLIGHT_ID or RUN_MODE == SEARCH_FLIGHT_BY_FLIGHT_IDS:
+    elif RUN_MODE == RUN_FOR_A_RANGE:
+        ids = []
+        start_num = int(START_ID, 16)
+        end_num = int(END_ID, 16)
+        ids = ['{:08x}'.format(i).upper() for i in range(start_num, end_num)]
+        print(f"{len(ids)} entries")
+
+    if RUN_MODE in [SEARCH_FLIGHT_BY_REG, SEARCH_FLIGHT_BY_FLIGHT_ID, SEARCH_FLIGHT_BY_FLIGHT_IDS, RUN_FOR_A_RANGE]:
+        search_cycle = 0
         for flight_id in ids:
-            flight_dict = search_flight(flight_id)
+            if ENABLE_SLEEP:
+                if search_cycle >= SLEEP_EVERY_N_SEARCH:
+                    time.sleep(EVERY_SLEEP_DURATION)
+                    search_cycle = 0
+                search_cycle += 1
+            try:
+                flight_dict = search_flight(flight_id)
+            except KeyError as e:
+                print('    '+str(e))
+                continue
+            except TypeError as e:
+                print('    '+str(e))
+                continue
+            except IndexError as e:
+                print('    '+str(e))
+                continue
+            except AttributeError as e:
+                for i in range(10):
+                    try:
+                        time.sleep(EVERY_SLEEP_DURATION*(i+1))
+                        print('    AttributeError, retry shortly')
+                        flight_dict = search_flight(flight_id)
+                        break
+                    except AttributeError as e:
+                        if i > 8:
+                            print('Too many AttributeError, exiting...')
+                            exit()
+                        else:
+                            continue
             if OUTPUT_KML:
                 outputKML(flight_dict)
             if OUTPUT_GPX:

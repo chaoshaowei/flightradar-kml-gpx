@@ -1,10 +1,17 @@
 __pycache__/*
 .vscode/*
 
-GPXs/*
-KMLs/*
-Responses/*
-Responses_Manual/*
-Ian/*
-Old/*
-Experimental/*
+GPXs/
+KMLs/
+HEXs/
+Responses/
+Responses_Manual/
+Responses_Error/
+Custom/
+Temp/
+Old/
+Experimental/
+
+token.txt
+cookie.txt
+fleet_list.txt

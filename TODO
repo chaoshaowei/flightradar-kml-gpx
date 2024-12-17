@@ -1,0 +1,11 @@
+To automatically pinpoint FR24 Hex ID, from given datetime
+    If no database exists, finds 10000000, 11B63080, 1CC20400, 20000000, 30000000
+    After database initialization, use continuous interpolation to find Hex ID, until delta is small (1 sec?)
+        Inner interpolation: straight forward, if error, sequence one by one until found
+        Outer interpolation: If error, sequence jump closer to known point by half a time
+
+To find within a period of time (first trackpoint with timestamp), is there a aircraft reg match
+    (eg. BLOCK_OUT-5min ~to~ TAKEOFF+5min)
+    Pinpoint start/end hex id, then start sequence 1 by 1
+
+To merge newly downloaded reg flight list, with older one, if existing
