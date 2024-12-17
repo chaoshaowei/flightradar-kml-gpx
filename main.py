@@ -57,7 +57,7 @@ if __name__ == '__main__':
     # Constants
     #-----------------------------
     REG_ID = 'B-16340'
-    FLIGHT_ID = '31d5273a'#
+    FLIGHT_ID = '31d5273a'
     FLIGHT_IDS = ['36eb3807', '36eba98f']
     START_ID = '0CDF70B8'
     END_ID = '0CDF7A28'
