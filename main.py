@@ -54,7 +54,7 @@ if __name__ == '__main__':
     #-----------------------------
     REG_ID = 'B-16340'
     FLIGHT_ID = '31d5273a'#
-    FLIGHT_IDS = ['31fa764b', '31fb135e', '320467fb', '3204c444', '320859d6', '320ca915']
+    FLIGHT_IDS = ['32d0984b', '32d12f76']
 
     #-----------------------------
     # target url
@@ -135,7 +135,9 @@ if __name__ == '__main__':
             print("  Will not be searched")
 
         # Generate URL
-        flight_url = FLIGHT_URL_TEMPLATE.replace('[FLIGHT_ID]', flight_id).replace('[TIMESTAMP]', str(int(datetime.datetime.now().timestamp())))
+        #timestamp_str = '1695335400&token=sad'
+        timestamp_str = str(int((datetime.datetime.now()).timestamp()))
+        flight_url = FLIGHT_URL_TEMPLATE.replace('[FLIGHT_ID]', flight_id).replace('[TIMESTAMP]', timestamp_str)
         print(flight_url)
 
         # Getting Data
