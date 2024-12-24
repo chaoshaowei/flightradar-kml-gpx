@@ -58,7 +58,7 @@ if __name__ == '__main__':
         r = s.request(method=method, url=url, headers=headers)
         while r.status_code in [402, 520]:
             print('    Too many requests, cooling down')
-            time.sleep(15)
+            time.sleep(30)
             r = s.request(method=method, url=url, headers=headers)
         return r
 
@@ -69,6 +69,17 @@ if __name__ == '__main__':
             self.callsign: str = ''
             self.origin: str = 'XXX'
             self.real_dest: str = 'XXX'
+        
+        @classmethod
+        def from_dict(self, raw_summary: dict):
+            if raw_summary.keys() != set(['hex_id', 'timestamp', 'callsign', 'origin', 'real_dest']):
+                return None
+            summary = Flight_Summary(raw_summary['hex_id'])
+            summary.timestamp = raw_summary['timestamp']
+            summary.callsign = raw_summary['callsign']
+            summary.origin = raw_summary['origin']
+            summary.real_dest = raw_summary['real_dest']
+            return summary
         
         def __jsonencode__(self):
             return {
@@ -111,7 +122,7 @@ if __name__ == '__main__':
             reg_url = REG_URL_TEMPLATE.replace('[REG_ID]', reg_id).replace('[TOKEN]', token).replace('[PAGE]', str(page))
             # If more than one page, payload needs to include some details about last page
             if page > 1:
-                time.sleep(1)
+                time.sleep(2)
                 last_id = list_dict['result']['response']['data'][-1]['identification']['id']
                 # If the last flight within the page is None, it should be converted into '' 
                 if not last_id:
@@ -137,11 +148,14 @@ if __name__ == '__main__':
                 print('  No results found')
                 return ids, summaries
         
-            ids += [list_dict['result']['response']['data'][i]['identification']['id'] for i in range(len(list_dict['result']['response']['data']))]
+            ids += [list_dict['result']['response']['data'][i]['identification']['id'] for i in range(len(list_dict['result']['response']['data'])) if list_dict['result']['response']['data'][i]['identification']['id']]
 
             # Extracting summary of each flight
             for data in list_dict['result']['response']['data']:
-                flight_summary = Flight_Summary(data['identification']['id'])
+                if data['identification']['id'] is not None:
+                    flight_summary = Flight_Summary(data['identification']['id'])
+                else:
+                    continue
                 # Callsign
                 if data['identification']['number']['default']:
                     flight_summary.callsign = data['identification']['number']['default']
@@ -169,9 +183,39 @@ if __name__ == '__main__':
         
         # Save summaries to file
         if save_response:
-            # TODO
-            # Read old HEX FILE, then merge both
             HEX_FILE = os.path.join(HEX_DIR, f'{reg_id}_hex.json')
+            valid_old_file = False
+            old_summaries: list[Flight_Summary] = []
+            # Check whether old file exists
+            if os.path.exists(HEX_FILE):
+                valid_old_file = True
+                with open(HEX_FILE, 'r', encoding='utf-8') as f:
+                    try:
+                        loaded_dict: dict = json.load(f)
+                    except json.decoder.JSONDecodeError:
+                        loaded_dict = {}
+                # Our target reg_id is the only key in the loaded file
+                if len(loaded_dict) == 1 and reg_id in loaded_dict.keys():
+                    for raw_summary in loaded_dict[reg_id]:
+                        old_summary = Flight_Summary.from_dict(raw_summary)
+                        if not isinstance(old_summary, Flight_Summary):
+                            valid_old_file = False
+                            break
+                        old_summaries.append(old_summary)
+                else:
+                    valid_old_file = False
+                # After iterating old file, decide which to do
+                if valid_old_file:
+                    print('  Old file found: Appending')
+                else:
+                    old_summaries = []
+                    print('  Old file found: Overwriting')
+            # Merging with old summaries
+            for old_summary in old_summaries:
+                if old_summary.hex_id not in ids and type(old_summary.hex_id) is str:
+                    summaries.append(old_summary)
+            summaries = sorted(summaries, key=lambda x: x.hex_id, reverse=True)
+            # Output final result
             with open(HEX_FILE, 'w', encoding='utf-8') as f:
                 json.dump({reg_id: summaries}, f, indent=2, cls=AdvancedJSONEncoder)
         
@@ -198,6 +242,7 @@ if __name__ == '__main__':
             ids, summaries = list_flights(reg_id, s, headers, output_tz, token)
             ids_dict[reg_id] = ids
             summaries_dict[reg_id] = summaries
+            time.sleep(1)
 
         return ids_dict, summaries_dict
 
